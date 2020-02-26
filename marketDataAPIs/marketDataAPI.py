@@ -1,0 +1,2 @@
+class MarketDataAPI:
+	name = "unspecified"
