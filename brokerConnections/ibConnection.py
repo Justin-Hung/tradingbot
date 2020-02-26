@@ -10,15 +10,15 @@ class IBConnection(BrokerConnection):
     def __init__(self):
         self.name = "Interactive Broker Connection"
 
-    def error_handler(msg):
+    def error_handler(self, msg):
         """Handles the capturing of error messages"""
         print ("Server Error: %s" % msg)
 
-    def reply_handler(msg):
+    def reply_handler(self, msg):
         """Han(dles of server replies"""
         print ("Server Response: %s, %s" % (msg.typeName, msg))
 
-    def create_contract(symbol, sec_type, exch, prim_exch, curr):
+    def create_contract(self, symbol, sec_type, exch, prim_exch, curr):
         """Create a Contract object defining what will
         be purchased, at which exchange and in which currency.
 
@@ -35,7 +35,7 @@ class IBConnection(BrokerConnection):
         contract.m_currency = curr
         return contract
 
-    def create_order(order_type, quantity, action):
+    def create_order(self, order_type, quantity, action):
         """Create an Order object (Market/Limit) to go long/short.
 
         order_type - 'MKT', 'LMT' for Market or Limit orders
@@ -47,24 +47,24 @@ class IBConnection(BrokerConnection):
         order.m_action = action
         return order
 
-    def order(ticker, action, shares, exchange=None, curr="USD"):
+    def order(self, ticker, action, shares, exchange=None, curr="USD"):
         # Connect to the Trader Workstation (TWS) running on the
         # usual port of 7496, with a clientId of 100
         # (The clientId is chosen by us and we will need 
         # separate IDs for both the execution connection and
         # market data connection)
-        tws_conn = Connection.create("127.0.0.1", port=7497, clientId=999)
+        tws_conn = Connection.create("127.0.0.1", port=7499, clientId=420)
         tws_conn.connect()
 
         # Assign the error handling function defined above
         # to the TWS connection
 
-        tws_conn.register(error_handler, 'Error')
+        tws_conn.register(self.error_handler, 'Error')
 
         # Assign all of the server reply messages to the
         # reply_handler function defined above
       
-        tws_conn.registerAll(reply_handler)
+        tws_conn.registerAll(self.reply_handler)
 
         # Create an order ID which is 'global' for this session. This
         # will need incrementing once new orders are submitted.
@@ -73,13 +73,13 @@ class IBConnection(BrokerConnection):
         if exchange is None:
             exchange = "SMART"
         # Create a contract in GOOG stock via SMART order routing
-        goog_contract = create_contract(ticker, 'STK', exchange, exchange, curr)
+        contract = self.create_contract(ticker, 'STK', exchange, exchange, curr)
 
         # Go long 100 shares of Google
-        goog_order = create_order('MKT', shares, action)
+        order = self.create_order('MKT', shares, action)
 
         # Use the connection to the send the order to IB
-        tws_conn.placeOrder(order_id, goog_contract, goog_order)    
+        tws_conn.placeOrder(order_id, contract, order)    
 
         sleep(1)
 
